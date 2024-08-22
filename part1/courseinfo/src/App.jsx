@@ -4,7 +4,7 @@ import { useState } from 'react'
 // import './App.css'
 
 
-function Header(props) {
+const Header = (props) => {
   return (
     <h1>{props.course}</h1>
   )
@@ -18,7 +18,7 @@ const Part = (props) => {
   );
 };
 
-function Content(props) {
+const Content = (props) => {
   console.log(props)
   return (
     <div>
@@ -30,7 +30,7 @@ function Content(props) {
 }
 
 
-function Total(props) {
+const Total = (props) => {
   return (
     <p>
       Number of exercises{" "}{props.parts[0].exercise + props.parts[1].exercise + props.parts[2].exercise}
@@ -38,7 +38,7 @@ function Total(props) {
   );
 }
 
-function App() {
+const App = () => {
   const course = 'Half Stack application development'
   const part1 = 'Fundamentals of React'
   const exercises1 = 10
