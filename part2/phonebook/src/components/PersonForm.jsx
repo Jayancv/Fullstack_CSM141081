@@ -2,7 +2,7 @@ import React from "react";
 import { useState } from "react";
 import personService from "../services/persons";
 
-const PersonForm = ({ persons, setPersons }) => {
+const PersonForm = ({ persons, setPersons, setNotification }) => {
   const [newPerson, setNewPerson] = useState({ name: "", number: "" });
 
   const addPerson = (event) => {
@@ -22,7 +22,9 @@ const PersonForm = ({ persons, setPersons }) => {
           `${newPerson.name} is already added to phonebook, replace the old number with a new one?`
         )
       ) {
-        const existingPerson = persons.find((person) => person.name === newPerson.name );
+        const existingPerson = persons.find(
+          (person) => person.name === newPerson.name
+        );
         const updatedPerson = { ...existingPerson, number: newPerson.number };
         personService
           .update(existingPerson.id, updatedPerson)
@@ -33,17 +35,32 @@ const PersonForm = ({ persons, setPersons }) => {
               )
             );
             setNewPerson({ name: "", number: "" });
+            setNotification({
+              error: 0,
+              message: `Updated ${returnedPerson.name}'s number`,
+            });
+            setTimeout(() => {
+              setNotification({ error: 0, message: null });
+            }, 5000);
           })
           .catch((error) => {
             console.error("Error updating person:", error);
-            alert("Failed to update person. Please try again.");
+            // alert("Failed to update person. Please try again.");
+            setNotification({
+              error: 1,
+              message: `Information of ${existingPerson.name} has already been removed from server`,
+            });
+            setTimeout(() => {
+              setNotification({ error: 0, message: null });
+            }, 5000);
+            setPersons(persons.filter((p) => p.id !== existingPerson.id));
+            setNewPerson({ name: "", number: "" });
           });
         return;
       }
       console.log("Person already exists, not adding again");
       return;
     }
-    
 
     const personObject = {
       name: newPerson.name,
@@ -55,6 +72,10 @@ const PersonForm = ({ persons, setPersons }) => {
         console.log("person created", returnedPerson);
         setPersons(persons.concat(returnedPerson));
         setNewPerson({ name: "", number: "" });
+        setNotification({ error: 0, message: `Added ${returnedPerson.name}` });
+        setTimeout(() => {
+          setNotification({ error: 0, message: null });
+        }, 5000);
       })
       .catch((error) => {
         console.error("Error creating person:", error);
