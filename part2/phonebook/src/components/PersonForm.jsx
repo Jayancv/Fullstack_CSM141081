@@ -1,8 +1,8 @@
 import React from "react";
 import { useState } from "react";
+import personService from "../services/persons";
 
 const PersonForm = ({ persons, setPersons }) => {
-
   const [newPerson, setNewPerson] = useState({ name: "", number: "" });
 
   const addPerson = (event) => {
@@ -25,9 +25,17 @@ const PersonForm = ({ persons, setPersons }) => {
       name: newPerson.name,
       number: newPerson.number,
     };
-    setPersons(persons.concat(personObject));
-    setNewPerson({ name: "", number: "" });
-    console.log("person added", personObject);
+    personService
+      .create(personObject)
+      .then((returnedPerson) => {
+        console.log("person created", returnedPerson);
+        setPersons(persons.concat(returnedPerson));
+        setNewPerson({ name: "", number: "" });
+      })
+      .catch((error) => {
+        console.error("Error creating person:", error);
+        alert("Failed to add person. Please try again.");
+      });
   };
 
   const handleInputChange = (event) => {
