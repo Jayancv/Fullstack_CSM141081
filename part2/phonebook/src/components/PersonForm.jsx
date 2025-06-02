@@ -12,14 +12,38 @@ const PersonForm = ({ persons, setPersons }) => {
       alert("Name cannot be empty");
       return;
     }
-    if (persons.some((person) => person.name === newPerson.name)) {
-      alert(`${newPerson.name} is already added to phonebook`);
-      return;
-    }
     if (!/^[\d+\-]*$/.test(newPerson.number)) {
       alert("Please enter a valid number");
       return;
     }
+    if (persons.some((person) => person.name === newPerson.name)) {
+      if (
+        window.confirm(
+          `${newPerson.name} is already added to phonebook, replace the old number with a new one?`
+        )
+      ) {
+        const existingPerson = persons.find((person) => person.name === newPerson.name );
+        const updatedPerson = { ...existingPerson, number: newPerson.number };
+        personService
+          .update(existingPerson.id, updatedPerson)
+          .then((returnedPerson) => {
+            setPersons(
+              persons.map((person) =>
+                person.id !== existingPerson.id ? person : returnedPerson
+              )
+            );
+            setNewPerson({ name: "", number: "" });
+          })
+          .catch((error) => {
+            console.error("Error updating person:", error);
+            alert("Failed to update person. Please try again.");
+          });
+        return;
+      }
+      console.log("Person already exists, not adding again");
+      return;
+    }
+    
 
     const personObject = {
       name: newPerson.name,
