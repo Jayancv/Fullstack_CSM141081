@@ -1,5 +1,8 @@
 const express = require('express');
 const morgan = require('morgan');
+require('dotenv').config();
+const Person = require('./models/person');
+
 const app = express();
 app.use(express.json());
 
@@ -9,89 +12,86 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :r
 
 app.use(express.static('dist'));
 
-let persons = [
-    { 
-      "id": "1",
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": "2",
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": "3",
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": "4",
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
-
-
-
-
 app.get('/api/persons', (request, response) => {
-    response.json(persons);
+    Person.find({}).then( (persons) => {
+        response.json(persons);
+        })
+        .catch(error => {
+            console.error('Error fetching persons:', error.message);
+            response.status(500).send({ error: 'Failed to fetch persons' });
+        });
 });
 
 app.get('/info', (request, response) => {
     const date = new Date();
-    const personCount = persons.length;
-    response.send(`
-        <p>Phonebook has info for ${personCount} people</p>
-        <p>${date}</p>
-    `);
+    Person.countDocuments({}).then(personCount => {
+        response.send(`
+            <p>Phonebook has info for ${personCount} people</p>
+            <p>${date}</p>
+        `);
+    }).catch(error => {
+        console.error('Error fetching person count:', error.message);
+        response.status(500).send({ error: 'Failed to fetch person count' });
+    });
 });
 
 app.get('/api/persons/:id', (request, response) => {
     const id = request.params.id;
-    const person = persons.find(p => p.id === id);
-    
-    if (person) {
-        response.json(person);
-    } else {
-        response.status(404).send({ error: 'Person not found' });
-    }
+    Person.findById(id).then(person => {
+        if (person) {
+            response.json(person);
+        } else {
+            response.status(404).send({ error: 'Person not found' });
+        }
+    }).catch(error => {
+        console.error('Error fetching person:', error.message);
+        response.status(500).send({ error: 'Failed to fetch person' });
+    });
 });
 
 app.delete('/api/persons/:id', (request, response) => {
     const id = request.params.id;
-    const index = persons.findIndex(p => p.id === id);
-    
-    if (index !== -1) {
-        persons.splice(index, 1);
-        response.status(204).end();
-    } else {
-        response.status(404).send({ error: 'Person not found' });
-    }
+    Person.findByIdAndDelete(id).then(result => {
+        console.log('Deleted person with id:', result);
+        if (result) {
+            response.status(204).end();
+        } else {
+            response.status(404).send({ error: 'Person not found' });
+        }
+    }).catch(error => {
+        console.error('Error deleting person:', error.message);
+        response.status(500).send({ error: 'Failed to delete person' });
+    });
 });
-
-
-
+    
 const getRandomId = () => {
     return (Math.random() * 10000).toFixed(0);
 };
 
 app.post('/api/persons', (request, response) => {
-    const newPerson = { ...request.body };
+    const newPerson = new Person({ ...request.body });
+    newPerson.id = getRandomId();
 
     if (!newPerson.name || !newPerson.number) {
         return response.status(400).json({ error: 'Name or number is missing' });
     }
 
-    if (persons.some(p => p.name === newPerson.name)) {
-        return response.status(400).json({ error: 'Name must be unique' });
-    }
+    // Person.findOne({ name: newPerson.name }).then(existingPerson => {
+    //     if (existingPerson) {
+    //         return response.status(400).json({ error: 'Name must be unique' });
+    //     } 
+    // }).catch(error => {
+    //     console.error('Error checking for existing person:', error.message);
+    //     return response.status(500).send({ error: 'Failed to check for existing person' });
+    // });
     console.log('Added new person:', newPerson);
-    newPerson.id = getRandomId();
-    persons = persons.concat(newPerson);
-    
-    response.status(200).json(newPerson);
+
+    newPerson.save().then(savedPerson => {
+        response.status(200).json(savedPerson);
+    }).catch(error => {
+        console.error('Error adding person:', error.message);
+        response.status(500).send({ error: 'Failed to add person' });
+    });
 });
 
 
