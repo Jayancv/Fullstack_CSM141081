@@ -79,7 +79,10 @@ const PersonForm = ({ persons, setPersons, setNotification }) => {
       })
       .catch((error) => {
         console.error("Error creating person:", error);
-        alert("Failed to add person. Please try again.");
+        setNotification({ error: 1, message: error.response.data.error });
+        setTimeout(() => {
+          setNotification({ error: 0, message: null });
+        }, 5000);
       });
   };
 
