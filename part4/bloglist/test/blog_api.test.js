@@ -4,6 +4,7 @@ const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
 const Blog = require('../models/blog')
+const User = require('../models/user')
 const testHelper = require('./test_helper')
 const { log } = require('node:console')
 
@@ -11,7 +12,36 @@ const api = supertest(app)
 
 beforeEach(async () => {
   await Blog.deleteMany({})
-  await Blog.insertMany(testHelper.initialBlogs)
+  const users = await User.find({})
+  if (users.length === 0) {
+    await User.insertMany(testHelper.rootUser)
+  }
+  else {
+     await User.findOne({ username: 'root' }).then(async user => {
+      if (!user) {
+        const newUser = new User(testHelper.rootUser)
+        await newUser.save()
+      }
+    })
+  }
+  const dummyUser = await User.findOne({ username: 'dummy' })
+  if (!dummyUser) {
+    const dummyUser = new User({
+      username: 'dummy',
+      name: 'Dummy User',
+      passwordHash: 'dummyPassword',
+    })
+    await dummyUser.save()
+  }
+  const user1 = await User.find({}).then(users => users[0])
+  const user2 = await User.find({}).then(users => users[1])
+
+  const blogs = testHelper.initialBlogs.map(blog => {
+    return { ...blog, user: user1.id.toString() }
+  })
+  blogs[1].user = user2.id.toString() // Ensure the second blog is linked to user2
+  // Insert initial blogs only if the collection is empty
+  await Blog.insertMany(blogs)
 })
 
 describe('Blog API get blogs test', () => {
@@ -57,8 +87,12 @@ describe('Blog API post blogs test', () => {
       likes: 1,
     }
 
+    const user = await testHelper.usersInDb().then(users => users[0])
+    const token = await testHelper.getTokenFromUser(user)
+
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -76,8 +110,11 @@ describe('Blog API post blogs test', () => {
       url: 'https://wikipedia.org/wiki/New_Blog',
     }
 
+    const user = await testHelper.usersInDb().then(users => users[0])
+    const token = await testHelper.getTokenFromUser(user)
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -98,7 +135,10 @@ describe('Blog API post blogs test', () => {
       likes: 1,
     }
 
-    await api.post('/api/blogs').send(titleMissing).expect(400)
+    const user = await testHelper.usersInDb().then(users => users[0])
+    const token = await testHelper.getTokenFromUser(user)
+
+    await api.post('/api/blogs').set('Authorization', `Bearer ${token}`).send(titleMissing).expect(400)
     const blogsAtEnd = await Blog.find({})
     assert.strictEqual(blogsAtEnd.length, testHelper.initialBlogs.length)
   })
@@ -110,7 +150,9 @@ describe('Blog API post blogs test', () => {
       likes: 1,
     }
 
-    await api.post('/api/blogs').send(urlMissing).expect(400)
+    const user = await testHelper.usersInDb().then(users => users[0])
+    const token = await testHelper.getTokenFromUser(user)
+    await api.post('/api/blogs').set('Authorization', `Bearer ${token}`).send(urlMissing).expect(400)
     const blogsAtEnd = await Blog.find({})
     assert.strictEqual(blogsAtEnd.length, testHelper.initialBlogs.length)
   })
@@ -118,13 +160,16 @@ describe('Blog API post blogs test', () => {
 
 
 describe('Blog API delete blogs test', () => {
-
   test('a blog can be deleted', async () => {
     const blogsAtStart = await Blog.find({})
     const blogToDelete = blogsAtStart[0]
 
+    const user = await testHelper.usersInDb().then(users => users[0])
+    const token = await testHelper.getTokenFromUser(user)
+
     await api
       .delete(`/api/blogs/${blogToDelete.id}`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(204)
 
     const blogsAtEnd = await Blog.find({})
@@ -134,10 +179,70 @@ describe('Blog API delete blogs test', () => {
   })
 
   test('deleting a non-existing blog returns 404', async () => {
+
+    const user = await testHelper.usersInDb().then(users => users[0])
+    const token = await testHelper.getTokenFromUser(user)
+
     const nonExistingId = await testHelper.nonExistingId()
     console.log(`Testing deletion of non-existing blog with id: ${nonExistingId}`)
-    await api.delete(`/api/blogs/${nonExistingId}`).expect(404)
+    await api.delete(`/api/blogs/${nonExistingId}`).set('Authorization', `Bearer ${token}`).expect(404)
   })
+
+  test('deleting a blog without authorization returns 401', async () => {
+    const blogsAtStart = await Blog.find({})
+    const blogToDelete = blogsAtStart[0]
+
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .expect(401)
+
+    const blogsAtEnd = await Blog.find({})
+    assert.strictEqual(blogsAtEnd.length, blogsAtStart.length)
+  })
+
+  test('deleting a blog with invalid token returns 401', async () => {
+    const blogsAtStart = await Blog.find({})
+    const blogToDelete = blogsAtStart[0]
+
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .set('Authorization', 'Bearer invalidtoken')
+      .expect(401)
+
+    const blogsAtEnd = await Blog.find({})
+    assert.strictEqual(blogsAtEnd.length, blogsAtStart.length)
+  })
+
+   test('deleting a blog with same user returns 204', async () => {
+    const blogsAtStart = await Blog.find({})
+    const user = await testHelper.usersInDb().then(users => users[1])
+    const blogToDelete = blogsAtStart.find(blog => blog.user.toString() === user.id.toString());
+    const token = await testHelper.getTokenFromUser(user)
+
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204)
+
+    const blogsAtEnd = await Blog.find({})
+    assert.strictEqual(blogsAtEnd.length, blogsAtStart.length-1)
+  })
+
+  test('deleting a blog with other user returns 401', async () => {
+    const blogsAtStart = await Blog.find({})
+    const user = await testHelper.usersInDb().then(users => users[1])
+    const blogToDelete = blogsAtStart.find(blog => blog.user.toString() !== user.id.toString());
+    const token = await testHelper.getTokenFromUser(user)
+
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(403)
+
+    const blogsAtEnd = await Blog.find({})
+    assert.strictEqual(blogsAtEnd.length, blogsAtStart.length)
+  })
+
 })
 
 
@@ -147,7 +252,7 @@ describe('Blog API update blogs test', () => {
     const blogToUpdate = blogsAtStart[0]
     const updatedBlog = { ...blogToUpdate.toObject(), likes: blogToUpdate.likes + 1 }
 
-    log(updatedBlog)
+    // log(updatedBlog)
     const response = await api
       .put(`/api/blogs/${blogToUpdate.id}`)
       .send(updatedBlog)
