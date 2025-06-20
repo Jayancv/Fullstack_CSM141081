@@ -1,15 +1,14 @@
 import { useState } from 'react'
-import blogService from '../services/blogs'
+import PropTypes from 'prop-types'
 
 const Blog = ({ blog, updateBlog, removeBlog }) => {
 
   const [expand, setExpand] = useState(false)
-  
   const blogBorderStyle = { border: '1px solid black', padding: '5px', marginBottom: '5px', lineHeight: '1.2' }
 
   const incrementLikes = () => {
     console.log(`Incremented likes for blog: ${blog.title}, new likes count: ${blog.likes + 1}`)
-     updateBlog({ ...blog, likes: blog.likes + 1 })
+    updateBlog({ ...blog, likes: blog.likes + 1 })
   }
 
   const deleteBlog = () => {
@@ -18,7 +17,7 @@ const Blog = ({ blog, updateBlog, removeBlog }) => {
     }
   }
 
-  return( 
+  return(
     <div style={blogBorderStyle}>
       {blog.title} - {blog.author} <button style={{ marginLeft: '5px' }} onClick={() => setExpand(!expand)}>
         {expand ? 'hide' : 'view'}
@@ -34,8 +33,14 @@ const Blog = ({ blog, updateBlog, removeBlog }) => {
         </div>
 
       )}
-    </div>  
+    </div>
   )
+}
+
+Blog.propTypes = {
+  blog: PropTypes.object.isRequired,
+  updateBlog: PropTypes.func.isRequired,
+  removeBlog: PropTypes.func.isRequired,
 }
 
 export default Blog

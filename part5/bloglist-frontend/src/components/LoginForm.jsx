@@ -1,6 +1,6 @@
-import loginService from "../services/login"
-import blogService from "../services/blogs"
-import Notification from "./Notification"
+import loginService from '../services/login'
+import blogService from '../services/blogs'
+import Notification from './Notification'
 
 const LoginForm = ({
   username, setUsername,
@@ -13,10 +13,10 @@ const LoginForm = ({
     try {
       const user = await loginService.login({ username, password })
       setUser(user)
-      setUsername("")
-      setPassword("")
+      setUsername('')
+      setPassword('')
       blogService.setToken(user.token)
-      window.localStorage.setItem("loggedBlogappUser", JSON.stringify(user))
+      window.localStorage.setItem('loggedBlogappUser', JSON.stringify(user))
       setNotification({
         error: 0,
         message: `Welcome back, ${user.name}!`,
@@ -26,12 +26,12 @@ const LoginForm = ({
       }, 5000)
 
     } catch (exception) {
-      console.error("Login failed:", exception)
-      setUsername("")
-      setPassword("")
+      console.error('Login failed:', exception)
+      setUsername('')
+      setPassword('')
       setNotification({
         error: 1,
-        message: "Wrong username or password",
+        message: 'Wrong username or password',
       })
       setTimeout(() => {
         setNotification({ error: 0, message: null })
@@ -47,13 +47,13 @@ const LoginForm = ({
       <form onSubmit={handleLogin}>
         <div>
           username
-          <input type="text" name="Username" value={username} onChange={({ target }) => setUsername(target.value)}/>
+          <input type='text' name='Username' value={username} onChange={({ target }) => setUsername(target.value)}/>
         </div>
         <div>
           password
-          <input type="password" name="Password" value={password} onChange={({ target }) => setPassword(target.value)}/>
+          <input type='password' name='Password' value={password} onChange={({ target }) => setPassword(target.value)}/>
         </div>
-        <button type="Submit">Login</button>
+        <button type='Submit'>Login</button>
       </form>
     </div>
   )

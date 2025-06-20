@@ -1,12 +1,12 @@
-import { useState } from "react"
+import { useState } from 'react'
 
 const NewBlogForm = ({ handleSubmit }) => {
-  const [newBlog, setNewBlog] = useState({ title: "", author: "", url: "" })
+  const [newBlog, setNewBlog] = useState({ title: '', author:  '', url:  '' })
 
   const createBlog = async (event) => {
     event.preventDefault()
     handleSubmit(newBlog)
-    setNewBlog({ title: "", author: "", url: "" }) // Reset the form fields
+    setNewBlog({ title: '', author: '', url: '' }) // Reset the form fields
   }
 
   return (
@@ -14,21 +14,21 @@ const NewBlogForm = ({ handleSubmit }) => {
       <h2>Create New Blog</h2>
       <form onSubmit={createBlog}>
         <div>
-          Title:{" "}
-          <input type="text" name="title" value={newBlog.title}
+          Title:{' '}
+          <input type='text' name='title' value={newBlog.title}
             onChange={({ target }) => setNewBlog({ ...newBlog, title: target.value })}/>
         </div>
         <div>
-          Author:{" "}
-          <input type="text" name="author" value={newBlog.author}
+          Author:{' '}
+          <input type='text' name='author' value={newBlog.author}
             onChange={({ target }) => setNewBlog({ ...newBlog, author: target.value })}/>
         </div>
         <div>
-          URL:{" "}
-          <input type="text" name="url" value={newBlog.url}
+          URL:{' '}
+          <input type='text' name='url' value={newBlog.url}
             onChange={({ target }) => setNewBlog({ ...newBlog, url: target.value })}/>
         </div>
-        <button type="submit">Create</button>
+        <button type='submit'>Create</button>
       </form>
     </div>
   )
