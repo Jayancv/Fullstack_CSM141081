@@ -1,16 +1,12 @@
-import React, { useState } from "react"
 import loginService from "../services/login"
 import blogService from "../services/blogs"
 import Notification from "./Notification"
 
 const LoginForm = ({
-  username,
-  setUsername,
-  password,
-  setPassword,
+  username, setUsername,
+  password, setPassword,
   setUser,
-  notification,
-  setNotification,
+  notification, setNotification,
 }) => {
   const handleLogin = async (event) => {
     event.preventDefault()
@@ -28,6 +24,7 @@ const LoginForm = ({
       setTimeout(() => {
         setNotification({ error: 0, message: null })
       }, 5000)
+
     } catch (exception) {
       console.error("Login failed:", exception)
       setUsername("")
@@ -50,21 +47,11 @@ const LoginForm = ({
       <form onSubmit={handleLogin}>
         <div>
           username
-          <input
-            type="text"
-            name="Username"
-            value={username}
-            onChange={({ target }) => setUsername(target.value)}
-          />
+          <input type="text" name="Username" value={username} onChange={({ target }) => setUsername(target.value)}/>
         </div>
         <div>
           password
-          <input
-            type="password"
-            name="Password"
-            value={password}
-            onChange={({ target }) => setPassword(target.value)}
-          />
+          <input type="password" name="Password" value={password} onChange={({ target }) => setPassword(target.value)}/>
         </div>
         <button type="Submit">Login</button>
       </form>
