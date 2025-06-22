@@ -18,18 +18,23 @@ const Blog = ({ blog, updateBlog, removeBlog }) => {
   }
 
   return(
-    <div style={blogBorderStyle}>
-      {blog.title} - {blog.author} <button style={{ marginLeft: '5px' }} onClick={() => setExpand(!expand)}>
-        {expand ? 'hide' : 'view'}
-      </button>
+    <div style={blogBorderStyle}> 
+      <div className='blogTitle'>
+          {blog.title} - {blog.author} 
+          <button style={{ marginLeft: '5px' }} onClick={() => setExpand(!expand)}>
+          {expand ? 'hide' : 'view'}
+          </button>
+      </div>
       {expand && (
         <div>
           <p style={{ margin: '2px 0' }}>{blog.url}</p>
           <p style={{ margin: '2px 0' }}>
-            likes {blog.likes} <button style={{ marginLeft: '5px' }} onClick={incrementLikes}>like</button>
+            likes {blog.likes} <button style={{ marginLeft: '5px' }} onClick={incrementLikes} id='like'>like</button>
           </p>
           <p style={{ margin: '2px 0' }}>{blog.user ? blog.user.name : 'Unknown user'}</p>
-          <button style={{ marginLeft: '5px' }} onClick={deleteBlog} >Remove</button>
+          {blog.user && blog.user.username === JSON.parse(window.localStorage.getItem('loggedBlogappUser')).username &&
+            <button style={{ marginLeft: '5px' }} onClick={deleteBlog} id='remove'>Remove</button>
+          }
         </div>
 
       )}
