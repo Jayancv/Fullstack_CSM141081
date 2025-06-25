@@ -17,7 +17,7 @@ export const anecdoteSlice = createSlice({
       )
     },
     createAnecdote: (state, action) => {
-      const newAnecdote = action.payload.newAnecdote
+      const newAnecdote = action.payload
       console.log('createAnecdote', newAnecdote)
       state.push(newAnecdote)
     },
@@ -38,7 +38,7 @@ export const createNewAction = (content) => {
   return async (dispatch) => {
     const newAnecdote = await anecdoteService.create(content)
     console.log(newAnecdote)
-    dispatch({ type: 'anecdotes/createAnecdote', payload: { newAnecdote } })
+    dispatch(createAnecdote(newAnecdote))
   }
 }
 
