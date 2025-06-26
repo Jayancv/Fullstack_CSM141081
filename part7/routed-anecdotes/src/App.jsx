@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Routes, Route, useMatch, useNavigate } from 'react-router-dom'
+import { Routes, Route, useMatch, useNavigate, Link } from 'react-router-dom'
 
 const Menu = () => {
   const padding = {
@@ -7,9 +7,9 @@ const Menu = () => {
   }
   return (
     <div>
-      <a href='/anecdotes' style={padding}>anecdotes</a>
-      <a href='/create' style={padding}>create new</a>
-      <a href='/about' style={padding}>about</a>
+      <Link to='/anecdotes' style={padding}>anecdotes</Link>
+      <Link to='/create' style={padding}>create new</Link>
+      <Link to='/about' style={padding}>about</Link>
     </div>
   )
 }
@@ -18,7 +18,7 @@ const AnecdoteList = ({ anecdotes }) => (
   <div>
     <h2>Anecdotes</h2>
     <ul>
-      {anecdotes.map(anecdote => <li key={anecdote.id}> <a href={`/anecdotes/${anecdote.id}`}> {anecdote.content} </a></li>)}
+      {anecdotes.map(anecdote => <li key={anecdote.id}> <Link to={`/anecdotes/${anecdote.id}`}> {anecdote.content} </Link></li>)}
     </ul>
   </div>
 )
