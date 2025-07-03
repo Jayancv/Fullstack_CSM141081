@@ -4,6 +4,7 @@ import Books from "./components/Books";
 import NewBook from "./components/NewBook";
 import Login from "./components/Login"
 import Recommended from "./components/Recommended";
+import Notification from "./components/Notification";
 import {
   BrowserRouter as Router,
   Routes, Route, Link
@@ -13,6 +14,7 @@ import { LOGGED_USER } from './queries'
 
 const App = () => {
   const [token, setToken] = useState(null)
+  const [errorMessage, setErrorMessage] = useState(null)
 
   useEffect(() => {
     const savedToken = window.localStorage.getItem('user-token')
@@ -20,7 +22,12 @@ const App = () => {
       setToken(savedToken)
     }
   }, [])
-
+  const notify = (message) => {
+    setErrorMessage(message)
+    setTimeout(() => {
+      setErrorMessage(null)
+    }, 10000)
+  }
   const { data } = useQuery(LOGGED_USER, { skip: !token })
   const loggedUser = data?.loggedUser
 
@@ -61,14 +68,14 @@ const App = () => {
           <Link style={padding} to='/login'>login</Link> 
         )}
         
-
+        <Notification  errorMessage={errorMessage} />
       </div>
         <Routes>
           <Route path="/" element={<Authors/>} />
           <Route path="/books" element={<Books/>} />
-          <Route path="/newbook" element={<NewBook loggedUser={loggedUser}/>} />
+          <Route path="/newbook" element={<NewBook loggedUser={loggedUser}  setError={notify}/>} />
           <Route path="/recomandation" element={<Recommended loggedUser={loggedUser}/>} />
-          <Route path="/login" element={<Login setToken={setToken}/>} />
+          <Route path="/login" element={<Login setToken={setToken}  setError={notify}/>} />
         </Routes>
 
       </Router>

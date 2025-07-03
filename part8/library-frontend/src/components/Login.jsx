@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { USER_LOGIN } from '../queries'
 import { useNavigate } from 'react-router-dom'
 
-const Login = ({setToken }) => {
+const Login = ({setToken , setError}) => {
 
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
@@ -11,10 +11,10 @@ const Login = ({setToken }) => {
 
   const [ userLogin, result ] = useMutation(USER_LOGIN, {
     //   refetchQueries: [ { query: ALL_AUTORS }, { query: ALL_BOOKS } ],
-      // onError: (error) => {
-      //   const messages = error.graphQLErrors.map(e => e.message).join('\n')
-      //   setError(messages)
-      // }
+      onError: (error) => {
+        const messages = error.graphQLErrors.map(e => e.message).join('\n')
+        setError(messages)
+      }
     })
 
     useEffect(() => {
@@ -23,6 +23,7 @@ const Login = ({setToken }) => {
       setToken(token)
       localStorage.setItem('user-token', token)
       navigate('/')
+      setError('')
     }
     }, [result.data])
   
