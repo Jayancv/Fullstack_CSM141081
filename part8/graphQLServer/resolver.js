@@ -1,5 +1,8 @@
 
 const { GraphQLError } = require("graphql")
+const { PubSub } = require('graphql-subscriptions')
+const pubsub = new PubSub()
+
 const Book = require("./src/schemas/Book")
 const Author = require("./src/schemas/Author")
 const User = require("./src/schemas/User")
@@ -65,7 +68,11 @@ const resolvers = {
       }
       const newBook = new Book({ ...args, author: author })
       try {
-        return await newBook.save()
+        const newBk = await newBook.save()
+        pubsub.publish('BOOK_ADDED', { bookAdded: newBk })
+
+        return newBk
+
       } catch (error) {
         throw new GraphQLError("Saving book failed", {
           extensions: {
@@ -76,6 +83,7 @@ const resolvers = {
         })
       }
     },
+
     editAuthor: async (root, args, { currentUser }) => {
       if (!currentUser) {
         throw new GraphQLError("wrong credentials", {
@@ -134,6 +142,12 @@ const resolvers = {
       }
 
       return { value: jwt.sign(userForToken, process.env.JWT_SECRET) }
+    },
+  },
+
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator('BOOK_ADDED')
     },
   },
 }

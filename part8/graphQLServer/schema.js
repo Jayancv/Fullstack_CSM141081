@@ -48,16 +48,19 @@ const typeDefs = `
     ): Author
 
     createUser(
-    username: String!
-    favoriteGenre: String!
+      username: String!
+      favoriteGenre: String!
     ): User
 
     login(
-    username: String!
-    password: String!
+      username: String!
+      password: String!
     ): Token
-}
+  }
 
+  type Subscription {
+    bookAdded: Book!
+  } 
 `
 
 module.exports = typeDefs

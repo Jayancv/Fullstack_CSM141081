@@ -9,8 +9,27 @@ import {
   BrowserRouter as Router,
   Routes, Route, Link
 } from 'react-router-dom'
-import { useQuery } from '@apollo/client'
-import { LOGGED_USER } from './queries'
+import { useQuery , useSubscription } from '@apollo/client'
+import { LOGGED_USER, BOOK_ADDED, ALL_BOOKS } from './queries'
+
+
+export const updateCache = (cache, query, addedBook) => {
+	const uniqByName = (a) => {
+		let seen = new Set();
+		return a.filter((item) => {
+			let k = item.title;
+			return seen.has(k) ? false : seen.add(k);
+		});
+	};
+
+	cache.updateQuery(query, (data) => {
+		const allBooks = data?.allBooks || [];
+		return {
+			allBooks: uniqByName(allBooks.concat(addedBook)),
+		};
+	});
+};
+
 
 const App = () => {
   const [token, setToken] = useState(null)
@@ -39,6 +58,19 @@ const App = () => {
     setToken('')
     window.localStorage.removeItem('user-token')
   }
+
+  useSubscription(BOOK_ADDED, {
+    onData: ({ data, client }) => {
+      const addedBook = data.data.bookAdded
+      notify(`${addedBook.title} added`)
+
+      updateCache(
+				client.cache,
+				{ query: ALL_BOOKS},
+				addedBook
+			)
+    }
+  })
 
   return (
     <div>
