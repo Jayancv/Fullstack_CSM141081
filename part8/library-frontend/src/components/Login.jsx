@@ -13,7 +13,7 @@ const Login = ({setToken , setError}) => {
     //   refetchQueries: [ { query: ALL_AUTORS }, { query: ALL_BOOKS } ],
       onError: (error) => {
         const messages = error.graphQLErrors.map(e => e.message).join('\n')
-        setError(messages)
+        setError(messages, true)
       }
     })
 
@@ -23,7 +23,7 @@ const Login = ({setToken , setError}) => {
       setToken(token)
       localStorage.setItem('user-token', token)
       navigate('/')
-      setError('')
+      setError('Login sucess...', false)
     }
     }, [result.data])
   

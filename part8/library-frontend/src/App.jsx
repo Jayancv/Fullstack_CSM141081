@@ -5,11 +5,8 @@ import NewBook from "./components/NewBook";
 import Login from "./components/Login"
 import Recommended from "./components/Recommended";
 import Notification from "./components/Notification";
-import {
-  BrowserRouter as Router,
-  Routes, Route, Link
-} from 'react-router-dom'
-import { useQuery , useSubscription } from '@apollo/client'
+import {Routes, Route, Link, useNavigate} from 'react-router-dom'
+import { useQuery , useSubscription, useApolloClient } from '@apollo/client'
 import { LOGGED_USER, BOOK_ADDED, ALL_BOOKS } from './queries'
 
 
@@ -33,7 +30,9 @@ export const updateCache = (cache, query, addedBook) => {
 
 const App = () => {
   const [token, setToken] = useState(null)
-  const [errorMessage, setErrorMessage] = useState(null)
+  const [errorMessage, setErrorMessage] = useState({ errorMessage: null, isError: false })
+  const client = useApolloClient();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const savedToken = window.localStorage.getItem('user-token')
@@ -41,11 +40,11 @@ const App = () => {
       setToken(savedToken)
     }
   }, [])
-  const notify = (message) => {
-    setErrorMessage(message)
+  const notify = (message, isError) => {
+    setErrorMessage({errorMessage:message, isError: isError})
     setTimeout(() => {
-      setErrorMessage(null)
-    }, 10000)
+      setErrorMessage({ errorMessage: null, isError: false })
+    }, 5000)
   }
   const { data } = useQuery(LOGGED_USER, { skip: !token })
   const loggedUser = data?.loggedUser
@@ -57,6 +56,9 @@ const App = () => {
   const logout = ()=>{
     setToken('')
     window.localStorage.removeItem('user-token')
+    client.resetStore();
+		navigate('/');
+
   }
 
   useSubscription(BOOK_ADDED, {
@@ -74,44 +76,28 @@ const App = () => {
 
   return (
     <div>
-      
-      {/* <div>
-        <button onClick={() => setPage("authors")}>authors</button>
-        <button onClick={() => setPage("books")}>books</button>
-        <button onClick={() => setPage("add")}>add book</button>
-      </div>
-
-      <Authors show={page === "authors"} />
-
-      <Books show={page === "books"} />
-
-      <NewBook show={page === "add"} /> */}
-      <Router>
-        <div>
-        <Link style={padding} to='/'>authors</Link> 
-        <Link style={padding} to='/books'>books</Link> 
+      <div>
+        <Link style={padding} to="/">authors</Link>
+        <Link style={padding} to="/books">books</Link>
         {token ? (
           <span>
-            <Link style={padding} to='/newbook'>add book</Link> 
-            <Link style={padding} to='/recomandation'>recomandation</Link> 
+            <Link style={padding} to="/newbook">add book</Link>
+            <Link style={padding} to="/recomandation">recomandation</Link>
             <button onClick={logout}>logout</button>
           </span>
         ) : (
-          <Link style={padding} to='/login'>login</Link> 
+          <Link style={padding} to="/login">login</Link>
         )}
-        
-        <Notification  errorMessage={errorMessage} />
+
+        <Notification errorMessage={errorMessage?.errorMessage} isError={errorMessage?.isError}/>
       </div>
-        <Routes>
-          <Route path="/" element={<Authors/>} />
-          <Route path="/books" element={<Books/>} />
-          <Route path="/newbook" element={<NewBook loggedUser={loggedUser}  setError={notify}/>} />
-          <Route path="/recomandation" element={<Recommended loggedUser={loggedUser}/>} />
-          <Route path="/login" element={<Login setToken={setToken}  setError={notify}/>} />
-        </Routes>
-
-      </Router>
-
+      <Routes>
+        <Route path="/" element={<Authors />} />
+        <Route path="/books" element={<Books />} />
+        <Route path="/newbook" element={<NewBook loggedUser={loggedUser} setError={notify} />} />
+        <Route path="/recomandation" element={<Recommended loggedUser={loggedUser} />} />
+        <Route path="/login" element={<Login setToken={setToken} setError={notify} />} />
+      </Routes>
     </div>
   );
 };

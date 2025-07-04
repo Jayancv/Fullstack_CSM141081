@@ -43,7 +43,7 @@ const NewBook = ({ loggedUser, setError }) => {
           return e.message
         })
         .join('\n')
-      setError(messages)
+      setError(messages, true)
     },
     onCompleted: () => {
 			navigate("/");
