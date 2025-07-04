@@ -37,11 +37,26 @@ const resolvers = {
     },
   },
   Author: {
-    bookCount: async (root) => {
-      // console.log(root.name)
-      const books = await Book.find({ author: root._id })
-      // console.log(books)
-      return books.length
+    bookCount: async (root, args, context) => {
+      // // console.log(root.name)
+      // const books = await Book.find({ author: root._id })
+      // // console.log(books)
+      // return books.length
+      
+      if (!context.bookCountsPromise) {
+        context.bookCountsPromise = Book.aggregate([
+          { $group: { _id: "$author", count: { $sum: 1 } } }
+        ]).then(counts => {
+          const map = {}
+          counts.forEach(c => {
+            map[c._id.toString()] = c.count
+          })
+          context.bookCounts = map
+          return map
+        })
+      }
+      const bookCounts = context.bookCounts || await context.bookCountsPromise
+      return bookCounts[root._id.toString()] || 0
     },
   },
   Mutation: {
